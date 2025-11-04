@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_DATABASE: productdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  config-server:
+    build: ./config-server
+    container_name: config-server
+    depends_on:
+      - eureka-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - microservices-net
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
+
+  authorization-service:
+    build: ./authorization-service
+    container_name: authorization-service
+    networks:
+      - microservices-net
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    depends_on:
+      - mysql
+      - eureka-server
+      - config-server
+    networks:
+      - microservices-net
+
+  review-service:
+    build: ./review-service
+    container_name: review-service
+    depends_on:
+      - mysql
+      - eureka-server
+      - config-server
+    networks:
+      - microservices-net
+
+  recommendation-service:
+    build: ./recommendation-service
+    container_name: recommendation-service
+    depends_on:
+      - mysql
+      - eureka-server
+      - config-server
+    networks:
+      - microservices-net
+
+  product-composite-service:
+    build: ./product-composite-service
+    container_name: product-composite-service
+    depends_on:
+      - product-service
+      - review-service
+      - recommendation-service
+      - eureka-server
+    networks:
+      - microservices-net
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - authorization-service
+      - product-composite-service
+    networks:
+      - microservices-net
+
+volumes:
+  db_data:
+
+networks:
+  microservices-net:
