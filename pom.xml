@@ -58,6 +58,7 @@
         <module>product-composite-service</module>
         <module>eureka-server</module>
         <module>config-server</module>
+        <module>client-rest</module>
     </modules>
     <build>
         <plugins>
